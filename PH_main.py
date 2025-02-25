@@ -69,7 +69,7 @@ class StartScreen:
 
         # Метка для вывода списка лидеров
         self.leaderboard_text = tk.Label(root, text=self.get_leaderboard_text(), font=("Arial", 12), justify="left")
-        self.leaderboard_text.pack(pady=5)
+        self.leaderboard_text.pack(pady=10)
 
     def get_leaderboard_text(self):
         #Загружает и форматирует текст таблицы лидеров
@@ -395,14 +395,19 @@ class GameGUI:
                 congrats_text = f"Отлично! Заказ собран правильно!\nВы заработали {earnings} монет!"
                 self.congrats_label.config(text=congrats_text)
                 self.congrats_label.pack(pady=20)
-                
+
                 # Обновляем данные игрока
                 self.game.chef.earn_money(earnings)
                 if self.game.chef.level_up():
-                    self.congrats_label.config(text=f"{congrats_text}\nПоздравляем! Вы достигли уровня {self.game.chef.level}!")
-                
-                # Через 2 секунды возвращаем интерфейс в исходное состояние
-                self.root.after(2000, self.reset_after_success)
+                    congrats_text += f"\nПоздравляем! Вы достигли уровня {self.game.chef.level}!"
+                    self.congrats_label.config(text=congrats_text)
+
+                # Проверяем уровень игрока
+                if self.game.chef.level >= WIN_LEVEL:
+                    self.root.after(2000, self.end_game_successfully)  # Если уровень 5, завершаем игру
+                else:
+                    self.root.after(2000, self.reset_after_success)
+
             else:
                 print(f"Демон разгневан, пицца неправильная!")
                 if not self.game.chef.lose_reputation():
@@ -475,23 +480,23 @@ class GameGUI:
 
         # Создаем кнопки для улучшения оборудования
         self.upgrade_labels["oven"] = tk.Label(self.upgrade_frame, text=f"Печь увеличивает скорость приготовления пиццы на 10% (Уровень: {self.game.chef.equipment['oven']} | Стоимость: {upgrade_cost} монет)")
-        self.upgrade_labels["oven"].pack(pady=5)
+        self.upgrade_labels["oven"].pack(pady=10)
         self.upgrade_buttons["oven"] = tk.Button(self.upgrade_frame, text="Улучшить печь", command=lambda: self.upgrade("oven", upgrade_cost))
-        self.upgrade_buttons["oven"].pack(pady=5)
+        self.upgrade_buttons["oven"].pack(pady=10)
         self.upgrade_buttons["oven"].bind("<Enter>", self.on_enter)
         self.upgrade_buttons["oven"].bind("<Leave>", self.on_leave)
 
         self.upgrade_labels["tools"] = tk.Label(self.upgrade_frame, text=f"Снижает стоимость пиццы на 10% (Уровень: {self.game.chef.equipment['tools']} | Стоимость: {upgrade_cost} монет)")
-        self.upgrade_labels["tools"].pack(pady=5)
+        self.upgrade_labels["tools"].pack(pady=10)
         self.upgrade_buttons["tools"] = tk.Button(self.upgrade_frame, text="Улучшить инструменты", command=lambda: self.upgrade("tools", upgrade_cost))
-        self.upgrade_buttons["tools"].pack(pady=5)
+        self.upgrade_buttons["tools"].pack(pady=10)
         self.upgrade_buttons["tools"].bind("<Enter>", self.on_enter)
         self.upgrade_buttons["tools"].bind("<Leave>", self.on_leave)
 
         self.upgrade_labels["fridge"] = tk.Label(self.upgrade_frame, text=f"Холодильник увеличивает количество ингредиентов на 1 (Уровень: {self.game.chef.equipment['fridge']} | Стоимость: {upgrade_cost} монет)")
-        self.upgrade_labels["fridge"].pack(pady=5)
+        self.upgrade_labels["fridge"].pack(pady=10)
         self.upgrade_buttons["fridge"] = tk.Button(self.upgrade_frame, text="Улучшить холодильник", command=lambda: self.upgrade("fridge", upgrade_cost))
-        self.upgrade_buttons["fridge"].pack(pady=5)
+        self.upgrade_buttons["fridge"].pack(pady=10)
         self.upgrade_buttons["fridge"].bind("<Enter>", self.on_enter)
         self.upgrade_buttons["fridge"].bind("<Leave>", self.on_leave)
 
@@ -551,7 +556,6 @@ class GameGUI:
         self.exit_button.pack(pady=10)
 
     def end_game_successfully(self):
-        """Обработка успешного завершения игры."""
         # Скрываем все элементы
         self.stats_label.pack_forget()
         self.accept_order_button.pack_forget()
@@ -574,6 +578,18 @@ class GameGUI:
 
         # Добавляем кнопку "Начать заново"
         self.restart_button.pack(pady=10)
+
+    def restart_game(self):
+        # Скрываем поздравительные элементы
+        self.congrats_label.pack_forget()
+        self.leaderboard_label.pack_forget()
+        self.leaderboard_text.pack_forget()
+        self.restart_button.pack_forget()
+
+        # Сбрасываем состояние игры
+        self.game = Game()
+        self.__init__(self.root, self.game)  # Пересоздаем GUI
+        self.play()
 
     def end_game(self):
         print("Игра окончена!")
