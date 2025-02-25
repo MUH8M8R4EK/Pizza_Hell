@@ -60,9 +60,32 @@ class StartScreen:
         self.name_entry.pack(pady=5)
         self.name_entry.bind('<Return>', lambda event: self.start_game())  # Добавляем обработчик нажатия Enter
 
-        
         self.start_button = tk.Button(root, text="Начать игру", command=self.start_game)
         self.start_button.pack(pady=10)
+
+        # Метка для отображения таблицы лидеров
+        self.leaderboard_label = tk.Label(root, text="Таблица лидеров:", font=("Arial", 14), fg="orange")
+        self.leaderboard_label.pack(pady=10)
+
+        # Метка для вывода списка лидеров
+        self.leaderboard_text = tk.Label(root, text=self.get_leaderboard_text(), font=("Arial", 12), justify="left")
+        self.leaderboard_text.pack(pady=5)
+
+    def get_leaderboard_text(self):
+        #Загружает и форматирует текст таблицы лидеров
+        leaderboard_data = self.game.load_leaderboard()
+        if not leaderboard_data:
+            return "Пока что нет результатов!"
+
+        # Сортируем лидерборд по времени (меньше лучше)
+        sorted_leaderboard = sorted(leaderboard_data, key=lambda x: x[1])
+
+        # Формируем текст таблицы лидеров
+        leaderboard_text = ""
+        for rank, (name, time_taken) in enumerate(sorted_leaderboard[:5], start=1):  # Показываем только топ-5
+            leaderboard_text += f"{rank}. {name} - {time_taken:.2f} секунд\n"
+
+        return leaderboard_text
         
     def start_game(self):
         player_name = self.name_entry.get().strip()
@@ -87,7 +110,9 @@ class StartScreen:
         self.name_label.destroy()
         self.name_entry.destroy()
         self.start_button.destroy()
-        
+        self.leaderboard_label.destroy()
+        self.leaderboard_text.destroy()
+
         # Запускаем основную игру
         self.game.player_name = player_name
         self.game.start_time = time.time()
@@ -212,6 +237,12 @@ class GameGUI:
         self.upgrade_frame = tk.Frame(root)
         self.upgrade_labels = {}
         self.upgrade_buttons = {}
+
+         # Элементы для завершения игры
+        self.congrats_label = tk.Label(root, text="", font=("Arial", 16), fg="green")
+        self.leaderboard_label = tk.Label(root, text="Таблица лидеров:", font=("Arial", 14), fg="orange")
+        self.leaderboard_text = tk.Label(root, text="", font=("Arial", 12), justify="left")
+        self.restart_button = tk.Button(root, text="Начать заново", command=self.restart_game)
 
         # Скрываем фреймы заказа и улучшения
         self.order_frame.pack_forget()
@@ -518,6 +549,31 @@ class GameGUI:
         self.accept_order_button.pack(pady=10)
         self.upgrade_button.pack(pady=10)
         self.exit_button.pack(pady=10)
+
+    def end_game_successfully(self):
+        """Обработка успешного завершения игры."""
+        # Скрываем все элементы
+        self.stats_label.pack_forget()
+        self.accept_order_button.pack_forget()
+        self.upgrade_button.pack_forget()
+        self.exit_button.pack_forget()
+
+        # Сохраняем результат в leaderboard
+        total_time = time.time() - self.game.start_time
+        self.game.leaderboard.append((self.game.player_name, total_time))
+        self.game.save_leaderboard()
+
+        # Отображаем поздравительный текст
+        self.congrats_label.config(text=f"Поздравляем!\nВы достигли максимального уровня!\nОбщее время: {total_time:.2f} секунд.")
+        self.congrats_label.pack(pady=20)
+
+        # Отображаем таблицу лидеров
+        self.leaderboard_label.pack(pady=10)
+        self.leaderboard_text.config(text=self.get_leaderboard_text())
+        self.leaderboard_text.pack(pady=5)
+
+        # Добавляем кнопку "Начать заново"
+        self.restart_button.pack(pady=10)
 
     def end_game(self):
         print("Игра окончена!")
