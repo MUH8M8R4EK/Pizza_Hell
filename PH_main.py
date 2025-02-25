@@ -7,7 +7,7 @@ from tkinter import messagebox
 # Константы
 BASE_COST = 10  # Базовая стоимость пиццы
 DEMON_PATIENCE = 3  # Максимальное количество отказов, после которого демоны прогонят повара
-LEVEL_UP_THRESHOLD = [250, 500, 1000, 2000]  # Суммы денег для повышения уровня
+LEVEL_UP_THRESHOLD = [200, 250, 300, 350]  # Суммы денег для повышения уровня
 UPGRADE_COST = 20  # Базовая стоимость улучшения оборудования
 WIN_LEVEL = 5  # Уровень, на котором игра заканчивается
 
@@ -50,7 +50,7 @@ class StartScreen:
     def __init__(self, root, game):
         self.root = root
         self.game = game
-        self.root.title("Адская пиццерия - Вход")
+        self.root.title("Адская пиццерия - Добро пожаловать")
         
         # Создаем и размещаем элементы стартового экрана
         self.name_label = tk.Label(root, text="Введите ваше имя:", font=("Arial", 12))
@@ -565,10 +565,10 @@ class GameGUI:
         # Сохраняем результат в leaderboard
         total_time = time.time() - self.game.start_time
         self.game.leaderboard.append((self.game.player_name, total_time))
-        self.game.save_leaderboard()
+        self.game._leaderboard()
 
         # Отображаем поздравительный текст
-        self.congrats_label.config(text=f"Поздравляем!\nВы достигли максимального уровня!\nОбщее время: {total_time:.2f} секунд.")
+        self.congrats_label.config(text=f"Поздравляем!\nВы достигли максимального уровня!\nВсе демоны сыты!\nОбщее время: {total_time:.2f} секунд.")
         self.congrats_label.pack(pady=20)
 
         # Отображаем таблицу лидеров
@@ -586,9 +586,9 @@ class GameGUI:
         self.leaderboard_text.pack_forget()
         self.restart_button.pack_forget()
 
-        # Сбрасываем состояние игры
-        self.game = Game()
-        self.__init__(self.root, self.game)  # Пересоздаем GUI
+        # Создаем новую игру и пересоздаем GUI
+        new_game = Game()
+        self.__init__(self.root, new_game)  # Передаем новый экземпляр игры
         self.play()
 
     def end_game(self):
